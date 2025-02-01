@@ -1,0 +1,39 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/supabase';
+import { format } from 'date-fns';
+
+const { slug } = Astro.params;
+
+const { data: post } = await supabase
+  .from('blog_posts')
+  .select('*, author:author_id(email)')
+  .eq('slug', slug)
+  .eq('published', true)
+  .single();
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title={post.title}>
+  <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">{post.title}</h1>
+      <div class="flex items-center text-gray-600">
+        <span>By {post.author.email}</span>
+        <span class="mx-2">•</span>
+        <time datetime={post.created_at}>
+          {format(new Date(post.created_at), 'MMMM d, yyyy')}
+        </time>
+      </div>
+    </header>
+
+    <div class="prose prose-lg max-w-none">
+      {post.content.split('\n').map((paragraph: string) => (
+        <p class="mb-4">{paragraph}</p>
+      ))}
+    </div>
+  </article>
+</Layout>
